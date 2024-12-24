@@ -1,5 +1,10 @@
 #!/bin/sh
+set -eu
 
-. /opt/paperless/venv/bin/activate
-cd /opt/paperless/src
+# shellcheck disable=SC1091
+. /usr/local/etc/paperless/paperless.env
+
+# shellcheck disable=SC1091
+. "$PAPERLESS_INSTALL_DIR/venv/bin/activate"
+cd "$PAPERLESS_INSTALL_DIR/src"
 exec python3 manage.py document_consumer

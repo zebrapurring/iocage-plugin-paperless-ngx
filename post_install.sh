@@ -1,38 +1,49 @@
 #!/bin/sh
 
+set -eu
 
+# shellcheck disable=SC1091
+. /usr/local/etc/paperless/paperless.env
+
+# Start Redis
 sysrc -f /etc/rc.conf redis_enable="YES"
 service redis start
 
+# Download release of Paperless-ngx
+mkdir -p "$PAPERLESS_INSTALL_DIR"
+curl -sL "https://github.com/paperless-ngx/paperless-ngx/releases/download/${PAPERLESS_VERSION}/paperless-ngx-${PAPERLESS_VERSION}.tar.xz" | \
+    tar -zxf - -C "$PAPERLESS_INSTALL_DIR" --strip-components=1
 
+# Create paperless headless user
+pw user add -n paperless -c 'Paperless' -d "$PAPERLESS_INSTALL_DIR" -m -s /bin/sh
+chown -R paperless:paperless "$PAPERLESS_INSTALL_DIR"
 
-mkdir /opt
-curl -L https://github.com/paperless-ngx/paperless-ngx/releases/download/v2.7.2/paperless-ngx-v2.7.2.tar.xz --output paperless-ngx-v2.7.2.tar.xz
-tar -zxf paperless-ngx-v2.7.2.tar.xz
-mv paperless-ngx /opt/paperless
-pw user add -n paperless -c 'Paperless' -d /opt/paperless -m -s /bin/sh
-cd /opt/paperless
-chown -R paperless:paperless /opt/paperless
+# Configure Paperless-ngx installation
+if [ ! -f "$PAPERLESS_CONFIGURATION_PATH" ]; then
+    cp "$PAPERLESS_INSTALL_DIR/paperless.conf" "$PAPERLESS_CONFIGURATION_PATH"
+    # Enable consumer polling
+    sed -i "" -e "s/#PAPERLESS_CONSUMER_POLLING/PAPERLESS_CONSUMER_POLLING/" "$PAPERLESS_CONFIGURATION_PATH"
+    # Enable data dir
+    sed -i "" -e "s/#PAPERLESS_DATA_DIR/PAPERLESS_DATA_DIR/" "$PAPERLESS_CONFIGURATION_PATH"
+    # Configure NLTK dir
+    sed -i "" -e "/PAPERLESS_DATA_DIR/ a\\$(printf "\nPAPERLESS_NLTK_DIR=../data/nltk")" "$PAPERLESS_CONFIGURATION_PATH"
+    # Enable media root dir
+    sed -i "" -e "s/#PAPERLESS_MEDIA_ROOT/PAPERLESS_MEDIA_ROOT/" "$PAPERLESS_CONFIGURATION_PATH"
+    # Enable consumption dir
+    sed -i "" -e "s/#PAPERLESS_CONSUMPTION_DIR/PAPERLESS_CONSUMPTION_DIR/" "$PAPERLESS_CONFIGURATION_PATH"
+    # Enable Redis connection
+    sed -i "" -e "s/#PAPERLESS_REDIS/PAPERLESS_REDIS/" "$PAPERLESS_CONFIGURATION_PATH"
+    # Configure SQLite database engine
+    sed -i "" -e "/PAPERLESS_REDIS/ a\\$(printf "\nPAPERLESS_DBENGINE=sqlite")" "$PAPERLESS_CONFIGURATION_PATH"
+fi
 
-
-sed -i "" -e 's/#PAPERLESS_CONSUMER_POLLING/PAPERLESS_CONSUMER_POLLING/' /opt/paperless/paperless.conf
-sed -i "" -e 's/#PAPERLESS_DATA_DIR/PAPERLESS_DATA_DIR/' /opt/paperless/paperless.conf
-sed -i "" -e  "/PAPERLESS_DATA_DIR/ a\\
-PAPERLESS_NLTK_DIR=../data/nltk\
-" /opt/paperless/paperless.conf
-sed -i "" -e 's/#PAPERLESS_MEDIA_ROOT/PAPERLESS_MEDIA_ROOT/' /opt/paperless/paperless.conf
-sed -i "" -e 's/#PAPERLESS_CONSUMPTION_DIR/PAPERLESS_CONSUMPTION_DIR/' /opt/paperless/paperless.conf
-sed -i "" -e 's/#PAPERLESS_REDIS/PAPERLESS_REDIS/' /opt/paperless/paperless.conf
-sed -i "" -e  "/PAPERLESS_REDIS/ a\\
-PAPERLESS_DBENGINE=sqlite\
-" /opt/paperless/paperless.conf
-
-
+# Allow R/W access to PDF files for ImageMagick
 sed -i "" -e '/PDF/s/rights="none"/rights="read|write"/' /usr/local/etc/ImageMagick-7/policy.xml
 
-
+# Execute installation script as user paperless
 su paperless -c /tmp/paperless_install
 
+# Build unpaper from source if not installed
 if ! unpaper --version > /dev/null 2>&1; then
     portsnap auto > /dev/null
     cd /usr/ports/security/libtasn1
@@ -43,6 +54,7 @@ if ! unpaper --version > /dev/null 2>&1; then
     rm -rf /usr/ports /var/db/portsnap
 fi
 
+# Start Paperless-ngx on boot
 sysrc -f /etc/rc.conf paperlessconsumer_enable="YES"
 sysrc -f /etc/rc.conf paperlesswebserver_enable="YES"
 sysrc -f /etc/rc.conf paperlessscheduler_enable="YES"
@@ -52,4 +64,5 @@ service paperlessconsumer start
 service paperlessscheduler start
 service paperlesstaskqueue start
 
+# Write plugin information
 echo "The default username and password for this install is admin for both" >> /root/PLUGIN_INFO
