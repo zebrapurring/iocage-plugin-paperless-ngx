@@ -4,16 +4,25 @@
 # REQUIRE: DAEMON redis
 # KEYWORD: shutdown
 
+# shellcheck disable=SC1091
 . /etc/rc.subr
+. /usr/local/etc/paperless/paperless.env
 
 name="paperlessconsumer"
-rcvar="${name}_enable"
-procname="daemon"
-
 pidfile="/var/run/${name}.pid"
+procname="$PAPERLESS_INSTALL_DIR/venv/bin/python3"
 
+# RC variables
+rcvar="${name}_enable"
+paperlessconsumer_chdir="${PAPERLESS_INSTALL_DIR}/src"
 command="/usr/sbin/daemon"
-command_args="-f -P ${pidfile} -u paperless /usr/local/sbin/${name}"
+command_args="--syslog --close-fds --child-pidfile ${pidfile} --user paperless ${procname} manage.py document_consumer"
+start_precmd="${name}_prestart"
+
+paperlessconsumer_prestart() {
+    export CRYPTOGRAPHY_OPENSSL_NO_LEGACY=1
+    . "$PAPERLESS_INSTALL_DIR/venv/bin/activate"
+}
 
 load_rc_config $name
 run_rc_command "$1"

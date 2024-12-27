@@ -1,19 +1,28 @@
 #!/bin/sh
 
-# PROVIDE: paperlessscheduler
+# PROVIDE: paperlesswebserver
 # REQUIRE: DAEMON redis
 # KEYWORD: shutdown
 
+# shellcheck disable=SC1091
 . /etc/rc.subr
+. /usr/local/etc/paperless/paperless.env
 
 name="paperlesswebserver"
-rcvar="${name}_enable"
-procname="daemon"
-
 pidfile="/var/run/${name}.pid"
+procname="$PAPERLESS_INSTALL_DIR/venv/bin/python3"
 
+# RC variables
+rcvar="${name}_enable"
+paperlesswebserver_chdir="${PAPERLESS_INSTALL_DIR}/src"
 command="/usr/sbin/daemon"
-command_args="-f -P ${pidfile} -u paperless /usr/local/sbin/${name}"
+command_args="--syslog --close-fds --child-pidfile ${pidfile} --user paperless ${procname} manage.py runserver 0.0.0.0:8000"
+start_precmd="${name}_prestart"
+
+paperlesswebserver_prestart() {
+    export CRYPTOGRAPHY_OPENSSL_NO_LEGACY=1
+    . "$PAPERLESS_INSTALL_DIR/venv/bin/activate"
+}
 
 load_rc_config $name
 run_rc_command "$1"
