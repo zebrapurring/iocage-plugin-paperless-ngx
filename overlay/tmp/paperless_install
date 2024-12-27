@@ -29,6 +29,6 @@ python3 -W ignore::RuntimeWarning -m nltk.downloader -d "$PAPERLESS_INSTALL_DIR/
 cd -
 
 # Fix for server Websockets (see https://github.com/paperless-ngx/paperless-ngx/issues/6349)
-patch -R src/paperless/settings.py < /tmp/paperless_daphne.patch
+sed -i "" -e "/INSTALLED_APPS = / a\\$(printf "\n    \"daphne\",")" "$PAPERLESS_INSTALL_DIR/src/paperless/settings.py"
 
 deactivate
