@@ -12,3 +12,36 @@ sudo iocage fetch \
     --plugin-name paperless-ngx \
     --name my_paperless_jail
 ```
+
+## Manual release upgrading
+
+You can upgrade your Paperless-ngx installation manually, if you don't want to perform a full plugin upgrade (make sure to snapshot your jail before upgrading with `iocage snapshot`):
+
+```sh
+. /usr/local/etc/paperless/paperless.env
+
+# Archive old release
+service paperlesswebserver stop
+service paperlessconsumer stop
+service paperlessscheduler stop
+service paperlesstaskqueue stop
+mv "$PAPERLESS_INSTALL_DIR" "${PAPERLESS_INSTALL_DIR}.${PAPERLESS_VERSION}"
+mkdir "$PAPERLESS_INSTALL_DIR"
+
+# Update version number in env file
+sed -i "" -e "s/^PAPERLESS_VERSION=.+$/PAPERLESS_VERSION=v2.13.5/" /usr/local/etc/paperless/paperless.env
+. /usr/local/etc/paperless/paperless.env
+
+# Download new release
+curl -sL "https://github.com/paperless-ngx/paperless-ngx/releases/download/${PAPERLESS_VERSION}/paperless-ngx-${PAPERLESS_VERSION}.tar.xz" | \
+    tar -zxf - -C "$PAPERLESS_INSTALL_DIR" --strip-components=1
+
+# Install new release and migrate existing data
+su paperless -c /tmp/paperless_install
+
+# Start services
+service paperlesswebserver start
+service paperlessconsumer start
+service paperlessscheduler start
+service paperlesstaskqueue start
+```
