@@ -35,6 +35,9 @@ if [ ! -f "$PAPERLESS_CONFIGURATION_PATH" ]; then
     sed -i "" -e "s/#PAPERLESS_REDIS/PAPERLESS_REDIS/" "$PAPERLESS_CONFIGURATION_PATH"
     # Configure SQLite database engine
     sed -i "" -e "/PAPERLESS_REDIS/ a\\$(printf "\nPAPERLESS_DBENGINE=sqlite")" "$PAPERLESS_CONFIGURATION_PATH"
+    # Fix path to FreeBSD binaries
+    sed -i "" -e "s|^#PAPERLESS_CONVERT_BINARY=.+$|PAPERLESS_CONVERT_BINARY=/usr/local/bin/convert|" "$PAPERLESS_CONFIGURATION_PATH"
+    sed -i "" -e "s|^#PAPERLESS_GS_BINARY=.+$|PAPERLESS_GS_BINARY=/usr/local/bin/gs|" "$PAPERLESS_CONFIGURATION_PATH"
 fi
 
 # Allow R/W access to PDF files for ImageMagick
