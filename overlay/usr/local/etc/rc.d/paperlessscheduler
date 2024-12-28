@@ -20,7 +20,6 @@ command_args="--syslog --close-fds --child-pidfile ${pidfile} --user paperless $
 start_precmd="${name}_prestart"
 
 paperlessscheduler_prestart() {
-    export CRYPTOGRAPHY_OPENSSL_NO_LEGACY=1
     . "$PAPERLESS_INSTALL_DIR/venv/bin/activate"
 }
 
