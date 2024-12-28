@@ -15,7 +15,7 @@ curl -sL "https://github.com/paperless-ngx/paperless-ngx/releases/download/${PAP
     tar -zxf - -C "$PAPERLESS_INSTALL_DIR" --strip-components=1
 
 # Create paperless headless user
-pw user add -n paperless -c 'Paperless' -d "$PAPERLESS_INSTALL_DIR" -m -s /bin/sh
+pw user add -n paperless -c "Paperless headless user" -d "$PAPERLESS_INSTALL_DIR" -m -s /bin/sh
 chown -R paperless:paperless "$PAPERLESS_INSTALL_DIR"
 
 # Configure Paperless-ngx installation
