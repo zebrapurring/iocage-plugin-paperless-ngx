@@ -18,7 +18,6 @@ pip install -r requirements.txt
 # Migrate database
 cd ./src
 python3 manage.py migrate
-DJANGO_SUPERUSER_PASSWORD="admin" python3 manage.py createsuperuser --noinput --email=root@localhost --username=admin
 python3 -W ignore::RuntimeWarning -m nltk.downloader -d "$PAPERLESS_INSTALL_DIR/data/nltk" snowball_data
 python3 -W ignore::RuntimeWarning -m nltk.downloader -d "$PAPERLESS_INSTALL_DIR/data/nltk" stopwords
 python3 -W ignore::RuntimeWarning -m nltk.downloader -d "$PAPERLESS_INSTALL_DIR/data/nltk" punkt
