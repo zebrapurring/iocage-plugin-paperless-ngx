@@ -18,19 +18,25 @@ curl -sL "https://github.com/paperless-ngx/paperless-ngx/releases/download/${PAP
 pw user add -n paperless -c "Paperless headless user" -d "$PAPERLESS_INSTALL_DIR" -m -s /bin/sh
 chown -R paperless:paperless "$PAPERLESS_INSTALL_DIR"
 
+# Create data directories
+mkdir -p \
+    "$PAPERLESS_DATA_DIR" \
+    "$PAPERLESS_LOGGING_DIR" \
+    "$PAPERLESS_MEDIA_ROOT" \
+    "$PAPERLESS_CONSUMPTION_DIR"
+chown -R paperless:paperless \
+    "$PAPERLESS_DATA_DIR" \
+    "$PAPERLESS_LOGGING_DIR" \
+    "$PAPERLESS_MEDIA_ROOT" \
+    "$PAPERLESS_CONSUMPTION_DIR"
+
 # Configure Paperless-ngx installation
 if [ ! -f "$PAPERLESS_CONFIGURATION_PATH" ]; then
     cp "$PAPERLESS_INSTALL_DIR/paperless.conf" "$PAPERLESS_CONFIGURATION_PATH"
     # Enable consumer polling
     sed -i "" -e "s/#PAPERLESS_CONSUMER_POLLING/PAPERLESS_CONSUMER_POLLING/" "$PAPERLESS_CONFIGURATION_PATH"
-    # Enable data dir
-    sed -i "" -e "s/#PAPERLESS_DATA_DIR/PAPERLESS_DATA_DIR/" "$PAPERLESS_CONFIGURATION_PATH"
     # Configure NLTK dir
     sed -i "" -e "/PAPERLESS_DATA_DIR/ a\\$(printf "\nPAPERLESS_NLTK_DIR=../data/nltk")" "$PAPERLESS_CONFIGURATION_PATH"
-    # Enable media root dir
-    sed -i "" -e "s/#PAPERLESS_MEDIA_ROOT/PAPERLESS_MEDIA_ROOT/" "$PAPERLESS_CONFIGURATION_PATH"
-    # Enable consumption dir
-    sed -i "" -e "s/#PAPERLESS_CONSUMPTION_DIR/PAPERLESS_CONSUMPTION_DIR/" "$PAPERLESS_CONFIGURATION_PATH"
     # Enable Redis connection
     sed -i "" -e "s/#PAPERLESS_REDIS/PAPERLESS_REDIS/" "$PAPERLESS_CONFIGURATION_PATH"
     # Configure SQLite database engine
