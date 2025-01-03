@@ -50,6 +50,7 @@
     "py311-djangorestframework",
     "py311-drf-writable-nested",
     "py311-filelock",
+    "py311-gunicorn",
     "py311-imap-tools",
     "py311-img2pdf",
     "py311-langdetect",

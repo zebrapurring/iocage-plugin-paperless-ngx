@@ -16,10 +16,11 @@ procname="$PAPERLESS_INSTALL_DIR/venv/bin/python3"
 rcvar="${name}_enable"
 paperlesswebserver_chdir="${PAPERLESS_INSTALL_DIR}/src"
 command="/usr/sbin/daemon"
-command_args="--syslog --close-fds --child-pidfile ${pidfile} --user paperless ${procname} manage.py runserver 0.0.0.0:8000"
+command_args="--syslog --close-fds --child-pidfile ${pidfile} --user paperless ${procname} -m gunicorn -c ../gunicorn.conf.py paperless.asgi:application"
 start_precmd="${name}_prestart"
 
 paperlesswebserver_prestart() {
+    export CRYPTOGRAPHY_OPENSSL_NO_LEGACY=1
     . "$PAPERLESS_INSTALL_DIR/venv/bin/activate"
 }
 

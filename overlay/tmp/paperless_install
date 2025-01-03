@@ -28,4 +28,7 @@ if ! grep -q "^    \"daphne\",$" "$PAPERLESS_INSTALL_DIR/src/paperless/settings.
     sed -i "" -e "/INSTALLED_APPS = / a\\$(printf "\n    \"daphne\",")" "$PAPERLESS_INSTALL_DIR/src/paperless/settings.py"
 fi
 
+# Fix bug related using /dev/shm as temporary directory on FreeBSD
+sed -i "" 's|^worker_tmp_dir = "/dev/shm"$|#worker_tmp_dir = "/dev/shm"|' "$PAPERLESS_INSTALL_DIR/gunicorn.conf.py"
+
 deactivate
