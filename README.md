@@ -35,6 +35,7 @@ sed -i "" -e "s/^PAPERLESS_VERSION=.+$/PAPERLESS_VERSION=v2.13.5/" /usr/local/et
 # Download new release
 curl -sL "https://github.com/paperless-ngx/paperless-ngx/releases/download/${PAPERLESS_VERSION}/paperless-ngx-${PAPERLESS_VERSION}.tar.xz" | \
     tar -zxf - -C "$PAPERLESS_INSTALL_DIR" --strip-components=1
+chown -R paperless:paperless /usr/local/share/paperless
 
 # Install new release and migrate existing data
 su paperless -c /tmp/paperless_install
