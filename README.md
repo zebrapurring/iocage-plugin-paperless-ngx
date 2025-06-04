@@ -29,7 +29,7 @@ mv "$PAPERLESS_INSTALL_DIR" "${PAPERLESS_INSTALL_DIR}.${PAPERLESS_VERSION}"
 mkdir "$PAPERLESS_INSTALL_DIR"
 
 # Update version number in env file
-sed -i "" -e "s/^PAPERLESS_VERSION=.+$/PAPERLESS_VERSION=v2.13.5/" /usr/local/etc/paperless/paperless.env
+sed -i "" -E "s/^PAPERLESS_VERSION=\".+\"$/PAPERLESS_VERSION=\"v2.16.2\"/" /usr/local/etc/paperless/paperless.env
 . /usr/local/etc/paperless/paperless.env
 
 # Download new release

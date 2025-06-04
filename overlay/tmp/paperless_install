@@ -7,28 +7,20 @@ set -eux
 
 # Create and activate virtual environment
 cd "$PAPERLESS_INSTALL_DIR"
-python3.11 -m venv --system-site-packages venv
-# shellcheck disable=SC1091
-. venv/bin/activate
 
 # Install dependencies
-pip install --upgrade pip
-pip install -r requirements.txt
+tomlq --toml-output --in-place 'del(.tool.uv.environments)' pyproject.toml
+uv sync --extra webserver
+
+# WA: Fix bug with SQLite quoting (see https://code.djangoproject.com/ticket/35762)
+if uv pip show django | grep -q "Version: 5.1.8"; then
+    uv add django==5.2.1
+fi
 
 # Migrate database
 cd ./src
-python3 manage.py migrate
-python3 -W ignore::RuntimeWarning -m nltk.downloader -d "$PAPERLESS_INSTALL_DIR/data/nltk" snowball_data
-python3 -W ignore::RuntimeWarning -m nltk.downloader -d "$PAPERLESS_INSTALL_DIR/data/nltk" stopwords
-python3 -W ignore::RuntimeWarning -m nltk.downloader -d "$PAPERLESS_INSTALL_DIR/data/nltk" punkt
+uv run python manage.py migrate
+uv run python -W ignore::RuntimeWarning -m nltk.downloader -d "$PAPERLESS_INSTALL_DIR/data/nltk" snowball_data
+uv run python -W ignore::RuntimeWarning -m nltk.downloader -d "$PAPERLESS_INSTALL_DIR/data/nltk" stopwords
+uv run python -W ignore::RuntimeWarning -m nltk.downloader -d "$PAPERLESS_INSTALL_DIR/data/nltk" punkt
 cd -
-
-# Fix for server Websockets (see https://github.com/paperless-ngx/paperless-ngx/issues/6349)
-if ! grep -q "^    \"daphne\",$" "$PAPERLESS_INSTALL_DIR/src/paperless/settings.py"; then
-    sed -i "" -e "/INSTALLED_APPS = / a\\$(printf "\n    \"daphne\",")" "$PAPERLESS_INSTALL_DIR/src/paperless/settings.py"
-fi
-
-# Fix bug related using /dev/shm as temporary directory on FreeBSD
-sed -i "" 's|^worker_tmp_dir = "/dev/shm"$|#worker_tmp_dir = "/dev/shm"|' "$PAPERLESS_INSTALL_DIR/gunicorn.conf.py"
-
-deactivate

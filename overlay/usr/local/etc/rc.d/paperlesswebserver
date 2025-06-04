@@ -10,18 +10,27 @@
 
 name="paperlesswebserver"
 pidfile="/var/run/${name}.pid"
-procname="$PAPERLESS_INSTALL_DIR/venv/bin/python3"
+procname="/usr/local/bin/uv"
 
 # RC variables
 rcvar="${name}_enable"
 paperlesswebserver_chdir="${PAPERLESS_INSTALL_DIR}/src"
 command="/usr/sbin/daemon"
-command_args="--syslog --close-fds --child-pidfile ${pidfile} --user paperless ${procname} -m gunicorn -c ../gunicorn.conf.py paperless.asgi:application"
+command_args="--syslog --close-fds --child-pidfile ${pidfile} --user paperless ${procname} run granian --interface asginl --ws paperless.asgi:application"
 start_precmd="${name}_prestart"
 
 paperlesswebserver_prestart() {
     export CRYPTOGRAPHY_OPENSSL_NO_LEGACY=1
-    . "$PAPERLESS_INSTALL_DIR/venv/bin/activate"
+
+    # NOTE: See https://github.com/paperless-ngx/paperless-ngx/blob/dev/scripts/paperless-webserver.service
+    # Host: GRANIAN_HOST -> PAPERLESS_BIND_ADDR -> default
+    if [ -n "${PAPERLESS_BIND_ADDR:-}" ]; then export GRANIAN_HOST="$PAPERLESS_BIND_ADDR"; fi
+    # Port: GRANIAN_PORT -> PAPERLESS_PORT -> default
+    if [ -n "${PAPERLESS_PORT:-}" ]; then export GRANIAN_PORT="$PAPERLESS_PORT"; fi
+    # Workers: GRANIAN_WORKERS -> PAPERLESS_WEBSERVER_WORKERS -> default
+    if [ -n "${PAPERLESS_WEBSERVER_WORKERS:-}" ]; then export GRANIAN_WORKERS="$PAPERLESS_WEBSERVER_WORKERS"; fi
+    # URL path prefix: only set if PAPERLESS_FORCE_SCRIPT_NAME exists
+    if [ -n "${PAPERLESS_FORCE_SCRIPT_NAME:-}" ]; then export GRANIAN_URL_PATH_PREFIX="$PAPERLESS_FORCE_SCRIPT_NAME"; fi
 }
 
 load_rc_config $name

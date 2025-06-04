@@ -10,18 +10,13 @@
 
 name="paperlessconsumer"
 pidfile="/var/run/${name}.pid"
-procname="$PAPERLESS_INSTALL_DIR/venv/bin/python3"
+procname="/usr/local/bin/uv"
 
 # RC variables
 rcvar="${name}_enable"
 paperlessconsumer_chdir="${PAPERLESS_INSTALL_DIR}/src"
 command="/usr/sbin/daemon"
-command_args="--syslog --close-fds --child-pidfile ${pidfile} --user paperless ${procname} manage.py document_consumer"
-start_precmd="${name}_prestart"
-
-paperlessconsumer_prestart() {
-    . "$PAPERLESS_INSTALL_DIR/venv/bin/activate"
-}
+command_args="--syslog --close-fds --child-pidfile ${pidfile} --user paperless ${procname} run python manage.py document_consumer"
 
 load_rc_config $name
 run_rc_command "$1"
